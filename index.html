@@ -1,0 +1,1263 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#132018">
+  <meta name="description" content="15음, 19음, 21음 미니하프를 키보드와 터치로 연주하는 웹앱">
+  <title>미니하프 연주하기</title>
+  <link rel="icon" href="assets/icon.png">
+  <style>
+    :root {
+      --bg: #1a1410;
+      --panel: rgba(39, 51, 34, .78);
+      --panel-strong: rgba(45, 37, 26, .88);
+      --wood: #b9773d;
+      --wood-dark: #6e3f20;
+      --gold: #d9b45b;
+      --glow: #ffe08a;
+      --ink: #f3ecdd;
+      --muted: #c9bda7;
+      --green: #5e8067;
+      --red-string: #d8504a;
+      --blue-string: #4a7fd8;
+      --string-color: rgba(255, 250, 232, .62);
+      --shadow: rgba(0, 0, 0, .42);
+      --rose: #c77b52;
+      --teal: #4fa39a;
+      --violet: #8e6fc0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      touch-action: manipulation;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(233, 198, 139, .2), transparent 38%),
+        linear-gradient(180deg, #1d261d 0%, #0e1713 62%, #080d0b 100%);
+      color: var(--ink);
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    #app {
+      position: relative;
+      width: min(100vw, calc(100dvh * 9 / 16));
+      height: min(100dvh, calc(100vw * 16 / 9));
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        linear-gradient(160deg, rgba(255, 228, 174, .12), transparent 28%),
+        radial-gradient(circle at 50% 9%, rgba(255, 222, 163, .22), transparent 34%),
+        linear-gradient(180deg, #273322 0%, #132018 55%, #0d1712 100%);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, .48);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .screen[hidden] {
+      display: none;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--glow);
+      outline-offset: 3px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .select-screen {
+      padding: clamp(14px, 4vw, 28px);
+      gap: clamp(12px, 2.6vh, 20px);
+    }
+
+    .select-header {
+      flex: 0 0 auto;
+      padding-top: clamp(8px, 2.5vh, 24px);
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--gold);
+      font-size: clamp(.72rem, 2.5vw, .88rem);
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.76rem, 7vw, 2.55rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .select-header p {
+      max-width: 32ch;
+      margin: 10px auto 0;
+      color: var(--muted);
+      font-size: clamp(.9rem, 3.1vw, 1.04rem);
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    .select-grid {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: repeat(3, minmax(0, 1fr));
+      gap: clamp(10px, 2vh, 16px);
+    }
+
+    .select-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(86px, 32%) minmax(0, 1fr);
+      align-items: center;
+      min-height: 0;
+      width: 100%;
+      padding: clamp(10px, 2.7vw, 16px);
+      border: 1px solid rgba(255, 232, 183, .2);
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent 44%),
+        rgba(33, 39, 27, .74);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, .22);
+      cursor: pointer;
+      text-align: left;
+      overflow: hidden;
+      transform: translateY(0) scale(1);
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    .select-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+      pointer-events: none;
+    }
+
+    .select-card:hover,
+    .select-card:focus-visible,
+    .select-card.is-picked {
+      transform: translateY(-4px) scale(1.02);
+      border-color: color-mix(in srgb, var(--accent) 70%, white 14%);
+      box-shadow: 0 22px 48px rgba(0, 0, 0, .3), 0 0 24px color-mix(in srgb, var(--accent) 38%, transparent);
+    }
+
+    .select-thumb {
+      position: relative;
+      height: 100%;
+      min-height: 112px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 18px;
+      background: rgba(8, 13, 11, .28);
+    }
+
+    .select-thumb img {
+      width: 100%;
+      height: 100%;
+      max-height: 176px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 10px 12px rgba(0, 0, 0, .3));
+      -webkit-user-drag: none;
+    }
+
+    .select-copy {
+      min-width: 0;
+      padding-left: clamp(12px, 3vw, 18px);
+    }
+
+    .select-copy h2 {
+      margin-bottom: 8px;
+      font-size: clamp(1.08rem, 4vw, 1.42rem);
+      line-height: 1.16;
+      letter-spacing: 0;
+    }
+
+    .select-copy p {
+      color: var(--muted);
+      font-size: clamp(.79rem, 2.6vw, .95rem);
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .select-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      display: inline-grid;
+      place-items: center;
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: color-mix(in srgb, var(--accent) 78%, white 22%);
+      background: rgba(255, 255, 255, .07);
+      font-size: .72rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .select-footer {
+      flex: 0 0 auto;
+      color: rgba(243, 236, 221, .74);
+      font-size: clamp(.74rem, 2.6vw, .86rem);
+      text-align: center;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .play-screen {
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, .06), transparent 20%),
+        linear-gradient(180deg, #1e2b1e 0%, #111b15 64%, #0b120f 100%);
+    }
+
+    .topbar {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      padding: calc(env(safe-area-inset-top, 0px) + 10px) clamp(10px, 2.5vw, 16px) 8px;
+      min-height: 58px;
+      background: linear-gradient(180deg, rgba(8, 13, 11, .5), rgba(8, 13, 11, 0));
+      z-index: 5;
+    }
+
+    .back-btn,
+    .guide-toggle {
+      border: 1px solid rgba(255, 232, 183, .22);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .07);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 0 12px;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+
+    .back-btn:hover,
+    .guide-toggle:hover {
+      background: rgba(255, 255, 255, .12);
+      border-color: rgba(255, 224, 138, .56);
+      transform: translateY(-1px);
+    }
+
+    .title-wrap {
+      min-width: 0;
+      text-align: center;
+    }
+
+    .title-wrap h2 {
+      overflow: hidden;
+      color: var(--ink);
+      font-size: clamp(.98rem, 3.7vw, 1.18rem);
+      line-height: 1.12;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: 0;
+    }
+
+    .title-wrap p {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: clamp(.68rem, 2.3vw, .8rem);
+      white-space: nowrap;
+    }
+
+    .volume-control {
+      display: grid;
+      grid-template-columns: auto minmax(68px, 86px);
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .volume-control input {
+      width: 86px;
+      accent-color: var(--gold);
+    }
+
+    .play-main {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: clamp(6px, 2.3vw, 16px);
+    }
+
+    .harp-stage {
+      position: relative;
+      width: min(96%, 62vh);
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: var(--harp-aspect, 3 / 5);
+      margin: auto;
+      touch-action: none;
+    }
+
+    .harp-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      filter: drop-shadow(0 20px 24px rgba(0, 0, 0, .34));
+    }
+
+    .string-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .string-item {
+      outline: none;
+    }
+
+    .string-visible {
+      stroke: var(--string-color, rgba(255, 252, 235, .55));
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      opacity: .58;
+      pointer-events: none;
+    }
+
+    .string-hit {
+      stroke: rgba(255, 255, 255, .001);
+      stroke-width: 22;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      cursor: pointer;
+      pointer-events: stroke;
+    }
+
+    .string-glow {
+      stroke: var(--glow);
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      opacity: 0;
+      filter: drop-shadow(0 0 9px rgba(255, 213, 122, .95));
+      pointer-events: none;
+      transition: opacity .14s ease, stroke-width .18s ease;
+    }
+
+    .string-item.is-playing .string-glow {
+      opacity: .95;
+      stroke-width: 3.4;
+      animation: strum .5s ease-out;
+    }
+
+    @keyframes strum {
+      0% { transform: translateX(.6px); }
+      35% { transform: translateX(-.6px); }
+      70% { transform: translateX(.3px); }
+      100% { transform: translateX(0); }
+    }
+
+    .string-dot {
+      pointer-events: none;
+      opacity: .95;
+      filter: drop-shadow(0 0 4px rgba(0, 0, 0, .32));
+    }
+
+    .string-dot.is-c {
+      fill: var(--red-string);
+    }
+
+    .string-dot.is-f {
+      fill: var(--blue-string);
+    }
+
+    .string-item:focus-visible .string-visible,
+    .string-item:focus-visible .string-glow {
+      opacity: 1;
+      stroke-width: 3;
+    }
+
+    .play-bottom {
+      flex: 0 0 auto;
+      display: grid;
+      gap: 8px;
+      padding: 8px clamp(10px, 2.6vw, 16px) calc(env(safe-area-inset-bottom, 0px) + 12px);
+      background: linear-gradient(0deg, rgba(8, 13, 11, .72), rgba(8, 13, 11, 0));
+      z-index: 5;
+    }
+
+    .hint-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shortcut-hint {
+      min-width: 0;
+      color: var(--muted);
+      font-size: clamp(.76rem, 2.6vw, .9rem);
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .recent-note {
+      justify-self: start;
+      min-height: 34px;
+      max-width: 100%;
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 11px;
+      border: 1px solid rgba(255, 224, 138, .28);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .08);
+      color: var(--ink);
+      font-size: clamp(.78rem, 2.8vw, .92rem);
+      line-height: 1.2;
+      opacity: .82;
+      transform: translateY(0);
+      transition: opacity .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+
+    .recent-note.show {
+      opacity: 1;
+      transform: translateY(-1px);
+      box-shadow: 0 0 20px rgba(255, 224, 138, .18);
+    }
+
+    .guide-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .22s ease;
+    }
+
+    .guide-panel.is-open {
+      grid-template-rows: 1fr;
+    }
+
+    .guide-panel-inner {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .key-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px;
+      padding-top: 2px;
+    }
+
+    .key-cell {
+      min-width: 0;
+      min-height: 42px;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      border: 1px solid rgba(255, 232, 183, .13);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .06);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .key-cell.is-missing {
+      opacity: .32;
+    }
+
+    .key-cell strong {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--ink);
+      font-size: clamp(.62rem, 2.2vw, .76rem);
+      line-height: 1.1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .key-cell span {
+      color: var(--muted);
+      font-size: clamp(.56rem, 1.9vw, .68rem);
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+
+    .calibration-badge {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      z-index: 6;
+      display: none;
+      padding: 6px 9px;
+      border: 1px solid rgba(255, 224, 138, .35);
+      border-radius: 999px;
+      background: rgba(8, 13, 11, .7);
+      color: var(--glow);
+      font-size: .72rem;
+      pointer-events: none;
+    }
+
+    .calibration-badge.is-visible {
+      display: block;
+    }
+
+    @media (max-height: 680px) {
+      .select-screen {
+        gap: 10px;
+      }
+
+      .select-header {
+        padding-top: 6px;
+      }
+
+      .select-header p,
+      .select-footer {
+        display: none;
+      }
+
+      .select-card {
+        padding: 9px;
+        border-radius: 20px;
+      }
+
+      .select-thumb {
+        min-height: 86px;
+      }
+
+      .select-meta {
+        margin-top: 8px;
+      }
+
+      .topbar {
+        min-height: 48px;
+        padding-bottom: 4px;
+      }
+
+      .back-btn,
+      .guide-toggle {
+        min-height: 34px;
+        padding-inline: 10px;
+      }
+
+      .play-bottom {
+        gap: 6px;
+        padding-top: 5px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .volume-control {
+        grid-template-columns: auto;
+      }
+
+      .volume-control input {
+        width: 62px;
+      }
+
+      .back-btn {
+        padding-inline: 9px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
+
+      .string-item.is-playing .string-glow {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="app" aria-label="미니하프 연주 웹앱">
+    <section id="selectScreen" class="screen select-screen" aria-labelledby="selectTitle">
+      <header class="select-header">
+        <p class="eyebrow">Mini Harp Studio</p>
+        <h1 id="selectTitle">🎵 미니하프 연주하기</h1>
+        <p>숫자키로 현을 튕기고, Shift/Ctrl로 높은음·낮은음을 연주해요.</p>
+      </header>
+
+      <div id="selectGrid" class="select-grid" aria-label="미니하프 선택"></div>
+
+      <p class="select-footer">원본 사진은 왜곡 없이 표시되고, 투명한 현 오버레이로 연주됩니다.</p>
+    </section>
+
+    <section id="playScreen" class="screen play-screen" aria-labelledby="currentTitle" hidden>
+      <header class="topbar">
+        <button id="backBtn" class="back-btn" type="button" aria-label="미니하프 다시 선택">← 다시 선택</button>
+        <div class="title-wrap">
+          <h2 id="currentTitle">미니하프</h2>
+          <p id="currentRange">C Major</p>
+        </div>
+        <label class="volume-control" for="volumeSlider">
+          <span aria-hidden="true">음량</span>
+          <input id="volumeSlider" type="range" min="0" max="1" value="0.82" step="0.01">
+        </label>
+      </header>
+
+      <div class="play-main">
+        <div class="harp-stage">
+          <img class="harp-photo" src="assets/harp-21.jpg" alt="" draggable="false">
+          <svg class="string-layer" xmlns="http://www.w3.org/2000/svg" role="group"></svg>
+          <div id="calibrationBadge" class="calibration-badge">calibrate</div>
+        </div>
+      </div>
+
+      <footer class="play-bottom">
+        <div class="hint-row">
+          <p class="shortcut-hint">숫자 = C4~B4 · Shift+숫자 = C5↑ · Ctrl+숫자 = B3↓</p>
+          <button id="guideToggle" class="guide-toggle" type="button" aria-expanded="false" aria-controls="guidePanel">키표 보기</button>
+        </div>
+        <div id="recentNote" class="recent-note" aria-hidden="true">아직 연주한 음이 없어요</div>
+        <div id="guidePanel" class="guide-panel" aria-hidden="true">
+          <div class="guide-panel-inner">
+            <div id="keyGrid" class="key-grid" aria-label="선택한 미니하프의 유효 키"></div>
+          </div>
+        </div>
+      </footer>
+
+      <div id="ariaLive" class="sr-only" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const NOTES_15 = ["G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5"];
+    const NOTES_19 = ["E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5"];
+    const NOTES_21 = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5"];
+
+    const freqFromMidi = midi => +(440 * Math.pow(2, (midi - 69) / 12)).toFixed(2);
+    const NOTE = {
+      C3: { midi: 48, num: ".1", ko: "낮은 도" },
+      D3: { midi: 50, num: ".2", ko: "낮은 레" },
+      E3: { midi: 52, num: ".3", ko: "낮은 미" },
+      F3: { midi: 53, num: ".4", ko: "낮은 파" },
+      G3: { midi: 55, num: ".5", ko: "낮은 솔" },
+      A3: { midi: 57, num: ".6", ko: "낮은 라" },
+      B3: { midi: 59, num: ".7", ko: "낮은 시" },
+      C4: { midi: 60, num: "1", ko: "도" },
+      D4: { midi: 62, num: "2", ko: "레" },
+      E4: { midi: 64, num: "3", ko: "미" },
+      F4: { midi: 65, num: "4", ko: "파" },
+      G4: { midi: 67, num: "5", ko: "솔" },
+      A4: { midi: 69, num: "6", ko: "라" },
+      B4: { midi: 71, num: "7", ko: "시" },
+      C5: { midi: 72, num: "1'", ko: "높은 도" },
+      D5: { midi: 74, num: "2'", ko: "높은 레" },
+      E5: { midi: 76, num: "3'", ko: "높은 미" },
+      F5: { midi: 77, num: "4'", ko: "높은 파" },
+      G5: { midi: 79, num: "5'", ko: "높은 솔" },
+      A5: { midi: 81, num: "6'", ko: "높은 라" },
+      B5: { midi: 83, num: "7'", ko: "높은 시" }
+    };
+    Object.values(NOTE).forEach(note => {
+      note.freq = freqFromMidi(note.midi);
+    });
+
+    const MAP = {
+      LOW: { 1: "C3", 2: "D3", 3: "E3", 4: "F3", 5: "G3", 6: "A3", 7: "B3" },
+      MID: { 1: "C4", 2: "D4", 3: "E4", 4: "F4", 5: "G4", 6: "A4", 7: "B4" },
+      HIGH: { 1: "C5", 2: "D5", 3: "E5", 4: "F5", 5: "G5", 6: "A5", 7: "B5" }
+    };
+
+    const HARPS = {
+      "15": {
+        type: "15",
+        name: "15음 미니하프",
+        range: "G3~G5",
+        scale: "C Major",
+        image: "assets/harp-15.jpg",
+        accent: "var(--rose)",
+        aspect: "269 / 420",
+        summary: "G3~G5 · C Major · 가볍게 시작",
+        notes: NOTES_15,
+        geo: {
+          top: { x0: 18.5, y0: 12.1, cx: 43.8, cy: 11.4, x1: 69.5, y1: 13.8 },
+          bottom: { x0: 38.8, y0: 83.1, cx: 55.4, cy: 62.8, x1: 68.8, y1: 41.9 }
+        }
+      },
+      "19": {
+        type: "19",
+        name: "19음 미니하프",
+        range: "E3~B5",
+        scale: "C Major",
+        image: "assets/harp-19.jpg",
+        accent: "var(--teal)",
+        aspect: "537 / 780",
+        summary: "E3~B5 · C Major · 균형 잡힌 음역",
+        notes: NOTES_19,
+        geo: {
+          top: { x0: 17.5, y0: 17.4, cx: 48.4, cy: 20, x1: 78.6, y1: 17.2 },
+          bottom: { x0: 52.5, y0: 82.4, cx: 64, cy: 59.6, x1: 79.6, y1: 38.6 }
+        }
+      },
+      "21": {
+        type: "21",
+        name: "21음 미니하프",
+        range: "C3~B5",
+        scale: "C Major",
+        image: "assets/harp-21.jpg",
+        accent: "var(--violet)",
+        aspect: "596 / 842",
+        summary: "C3~B5 · C Major · 3옥타브 풀레인지",
+        notes: NOTES_21,
+        geo: {
+          top: { x0: 34.8, y0: 23.3, cx: 50.6, cy: 25.4, x1: 68.8, y1: 30.2 },
+          bottom: { x0: 45.5, y0: 70.2, cx: 58.4, cy: 55.2, x1: 71.6, y1: 39.6 }
+        }
+      }
+    };
+
+    const OVERRIDES = {
+      "15": {},
+      "19": {},
+      "21": {}
+    };
+
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const GLISS_COOLDOWN = 85;
+    const state = {
+      currentType: null,
+      lastPlayedAt: new Map(),
+      dragging: false,
+      guideOpen: false,
+      calibrating: new URLSearchParams(location.search).has("calibrate")
+    };
+
+    const els = {
+      selectScreen: document.querySelector("#selectScreen"),
+      playScreen: document.querySelector("#playScreen"),
+      selectGrid: document.querySelector("#selectGrid"),
+      backBtn: document.querySelector("#backBtn"),
+      currentTitle: document.querySelector("#currentTitle"),
+      currentRange: document.querySelector("#currentRange"),
+      volumeSlider: document.querySelector("#volumeSlider"),
+      stage: document.querySelector(".harp-stage"),
+      photo: document.querySelector(".harp-photo"),
+      svg: document.querySelector(".string-layer"),
+      recentNote: document.querySelector("#recentNote"),
+      ariaLive: document.querySelector("#ariaLive"),
+      guideToggle: document.querySelector("#guideToggle"),
+      guidePanel: document.querySelector("#guidePanel"),
+      keyGrid: document.querySelector("#keyGrid"),
+      calibrationBadge: document.querySelector("#calibrationBadge")
+    };
+
+    let ctx = null;
+    let master = null;
+    let reverbSend = null;
+
+    function svgEl(name, attrs = {}) {
+      const el = document.createElementNS(SVG_NS, name);
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, String(value)));
+      return el;
+    }
+
+    function quadPoint(curve, t) {
+      const m = 1 - t;
+      return {
+        x: m * m * curve.x0 + 2 * m * t * curve.cx + t * t * curve.x1,
+        y: m * m * curve.y0 + 2 * m * t * curve.cy + t * t * curve.y1
+      };
+    }
+
+    function makeStringPositions(type) {
+      const cfg = HARPS[type];
+      const last = cfg.notes.length - 1;
+      return cfg.notes.map((noteId, index) => {
+        const t = last === 0 ? 0 : index / last;
+        const top = quadPoint(cfg.geo.top, t);
+        const bottom = quadPoint(cfg.geo.bottom, t);
+        const override = OVERRIDES[type]?.[noteId] || {};
+        return {
+          noteId,
+          index,
+          x1: override.x1 ?? top.x,
+          y1: override.y1 ?? top.y,
+          x2: override.x2 ?? bottom.x,
+          y2: override.y2 ?? bottom.y
+        };
+      });
+    }
+
+    function stringColor(noteId) {
+      const pitchClass = noteId[0];
+      if (pitchClass === "C") return "var(--red-string)";
+      if (pitchClass === "F") return "var(--blue-string)";
+      return "var(--string-color)";
+    }
+
+    function labelOf(noteId) {
+      const note = NOTE[noteId];
+      return note ? `${note.ko} (${noteId}, ${note.num})` : noteId;
+    }
+
+    function shortcutLabelOf(noteId) {
+      const degree = { C: "1", D: "2", E: "3", F: "4", G: "5", A: "6", B: "7" }[noteId[0]];
+      const octave = +noteId.slice(1);
+      if (octave === 3) return `Ctrl+${degree}`;
+      if (octave === 5) return `Shift+${degree}`;
+      return degree;
+    }
+
+    function digitOf(code) {
+      const match = /^(?:Digit|Numpad)([0-9])$/.exec(code);
+      return match ? match[1] : null;
+    }
+
+    function isEditableTarget(target) {
+      return !!(target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]'));
+    }
+
+    function resolveShortcut(eventLike, type) {
+      if (!HARPS[type]) return null;
+      if (eventLike.altKey || eventLike.metaKey) return null;
+      if (eventLike.shiftKey && eventLike.ctrlKey) return null;
+      const digit = digitOf(eventLike.code);
+      if (digit === null) return null;
+      const note = eventLike.shiftKey ? MAP.HIGH[digit] : eventLike.ctrlKey ? MAP.LOW[digit] : MAP.MID[digit];
+      if (!note) return null;
+      return HARPS[type].notes.includes(note) ? note : null;
+    }
+
+    function makeIR(audioContext, seconds, decay) {
+      const rate = audioContext.sampleRate;
+      const length = Math.max(1, Math.floor(rate * seconds));
+      const buffer = audioContext.createBuffer(2, length, rate);
+      for (let channel = 0; channel < 2; channel += 1) {
+        const data = buffer.getChannelData(channel);
+        for (let i = 0; i < length; i += 1) {
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+        }
+      }
+      return buffer;
+    }
+
+    function ensureAudio() {
+      if (!ctx) {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        master = ctx.createGain();
+        master.gain.value = +els.volumeSlider.value;
+        master.connect(ctx.destination);
+
+        const convolver = ctx.createConvolver();
+        convolver.buffer = makeIR(ctx, 1.9, 2.6);
+        reverbSend = ctx.createGain();
+        reverbSend.gain.value = 0.18;
+        reverbSend.connect(convolver).connect(master);
+      }
+      if (ctx.state === "suspended") ctx.resume();
+    }
+
+    function setVolume(value) {
+      ensureAudio();
+      const volume = Math.max(0, Math.min(1, +value));
+      master.gain.setTargetAtTime(volume, ctx.currentTime, 0.015);
+    }
+
+    function makePluckNoise(now, destination, frequency, amount = 0.05) {
+      const duration = 0.018;
+      const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+      const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i += 1) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const bandpass = ctx.createBiquadFilter();
+      bandpass.type = "bandpass";
+      bandpass.frequency.value = Math.min(8000, frequency * 4);
+      bandpass.Q.value = 0.7;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(amount, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      source.connect(bandpass).connect(gain).connect(destination);
+      source.start(now);
+      source.stop(now + duration + 0.01);
+    }
+
+    function playNote(noteId, opts = {}) {
+      ensureAudio();
+      const info = NOTE[noteId];
+      if (!info) return;
+
+      const now = ctx.currentTime;
+      const frequency = info.freq;
+      const decay = Math.max(1.6, 4.2 - (info.midi - 48) * 0.07);
+
+      const voice = ctx.createGain();
+      voice.gain.setValueAtTime(0.0001, now);
+      voice.gain.exponentialRampToValueAtTime(0.9, now + 0.004);
+      voice.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+
+      const lowpass = ctx.createBiquadFilter();
+      lowpass.type = "lowpass";
+      lowpass.Q.value = 0.5;
+      lowpass.frequency.setValueAtTime(Math.min(13000, frequency * 16), now);
+      lowpass.frequency.exponentialRampToValueAtTime(Math.max(800, frequency * 3), now + decay);
+
+      let output = lowpass;
+      if (ctx.createStereoPanner && typeof opts.pan === "number") {
+        const pan = ctx.createStereoPanner();
+        pan.pan.value = Math.max(-0.7, Math.min(0.7, opts.pan));
+        lowpass.connect(pan);
+        output = pan;
+      }
+      output.connect(master);
+      output.connect(reverbSend);
+
+      [[1, 1], [2, .55], [3, .34], [4, .2], [5, .13], [6, .08], [7, .05]].forEach(([harmonic, gainValue]) => {
+        if (frequency * harmonic > 15000) return;
+        const oscillator = ctx.createOscillator();
+        oscillator.type = "sine";
+        oscillator.frequency.value = frequency * harmonic;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(gainValue, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + decay * (1 / Math.sqrt(harmonic)));
+        oscillator.connect(gain).connect(voice);
+        oscillator.start(now);
+        oscillator.stop(now + decay + 0.08);
+      });
+
+      voice.connect(lowpass);
+      makePluckNoise(now, voice, frequency);
+    }
+
+    function flashString(noteId) {
+      const el = document.querySelector(`.string-item[data-note="${noteId}"]`);
+      if (!el) return;
+      el.classList.remove("is-playing");
+      void el.getBoundingClientRect();
+      el.classList.add("is-playing");
+      setTimeout(() => el.classList.remove("is-playing"), 520);
+    }
+
+    function updateAriaLive(noteId) {
+      els.ariaLive.textContent = `${labelOf(noteId)} 연주`;
+    }
+
+    function showRecentNote(noteId) {
+      const note = NOTE[noteId];
+      els.recentNote.textContent = `${note.ko} · ${noteId} · ${shortcutLabelOf(noteId)}`;
+      els.recentNote.classList.remove("show");
+      void els.recentNote.offsetWidth;
+      els.recentNote.classList.add("show");
+    }
+
+    function triggerNote(noteId, opts = {}) {
+      const type = state.currentType;
+      if (!type) return;
+      const notes = HARPS[type].notes;
+      if (!notes.includes(noteId)) return;
+      const index = notes.indexOf(noteId);
+      const pan = notes.length > 1 ? (index / (notes.length - 1)) * 1.4 - 0.7 : 0;
+      playNote(noteId, { ...opts, pan });
+      flashString(noteId);
+      showRecentNote(noteId);
+      updateAriaLive(noteId);
+    }
+
+    function canGliss(noteId) {
+      const now = performance.now();
+      const last = state.lastPlayedAt.get(noteId) || 0;
+      if (now - last < GLISS_COOLDOWN) return false;
+      state.lastPlayedAt.set(noteId, now);
+      return true;
+    }
+
+    function renderStrings(type) {
+      els.svg.innerHTML = "";
+      els.svg.setAttribute("viewBox", "0 0 100 100");
+      els.svg.setAttribute("preserveAspectRatio", "none");
+      els.svg.setAttribute("aria-label", `${HARPS[type].name} 현 영역`);
+
+      makeStringPositions(type).forEach(pos => {
+        const { noteId, x1, y1, x2, y2 } = pos;
+        const group = svgEl("g", {
+          class: "string-item",
+          tabindex: "0",
+          role: "button",
+          "data-note": noteId,
+          "aria-label": `${labelOf(noteId)}, 단축키 ${shortcutLabelOf(noteId)}`
+        });
+        group.style.setProperty("--string-color", stringColor(noteId));
+        group.append(
+          svgEl("line", { class: "string-visible", x1, y1, x2, y2 }),
+          svgEl("line", { class: "string-glow", x1, y1, x2, y2 }),
+          svgEl("line", { class: "string-hit", x1, y1, x2, y2 })
+        );
+
+        const pitchClass = noteId[0];
+        if (pitchClass === "C" || pitchClass === "F") {
+          group.append(svgEl("circle", {
+            class: `string-dot ${pitchClass === "C" ? "is-c" : "is-f"}`,
+            cx: x1,
+            cy: y1,
+            r: 1
+          }));
+        }
+
+        const playPointer = event => {
+          event.preventDefault();
+          state.dragging = true;
+          state.lastPlayedAt.set(noteId, performance.now());
+          triggerNote(noteId, { source: "pointer" });
+        };
+        const playKey = event => {
+          event.preventDefault();
+          triggerNote(noteId, { source: "focus" });
+        };
+        group.addEventListener("pointerdown", playPointer);
+        group.addEventListener("keydown", event => {
+          if (event.code === "Enter" || event.code === "Space") playKey(event);
+        });
+        els.svg.appendChild(group);
+      });
+    }
+
+    function renderKeyboardGuide(type) {
+      const cfg = HARPS[type];
+      const rows = [
+        { label: "Ctrl", map: MAP.LOW },
+        { label: "", map: MAP.MID },
+        { label: "Shift", map: MAP.HIGH }
+      ];
+      els.keyGrid.innerHTML = "";
+      rows.flatMap(row => Object.entries(row.map).map(([digit, noteId]) => ({ ...row, digit, noteId }))).forEach(item => {
+        const active = cfg.notes.includes(item.noteId);
+        const cell = document.createElement("div");
+        cell.className = `key-cell${active ? "" : " is-missing"}`;
+        const keyLabel = item.label ? `${item.label}+${item.digit}` : item.digit;
+        cell.innerHTML = `<strong>${keyLabel}</strong><span>${active ? item.noteId : "-"}</span>`;
+        els.keyGrid.appendChild(cell);
+      });
+    }
+
+    function renderSelectCards() {
+      els.selectGrid.innerHTML = "";
+      Object.values(HARPS).forEach(cfg => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "select-card";
+        card.style.setProperty("--accent", cfg.accent);
+        card.setAttribute("aria-label", `${cfg.name} 선택`);
+        card.innerHTML = `
+          <div class="select-thumb"><img src="${cfg.image}" alt="${cfg.name}" draggable="false"></div>
+          <div class="select-copy">
+            <h2>${cfg.name}</h2>
+            <p>${cfg.summary}</p>
+            <span class="select-meta" aria-hidden="true">
+              <span class="pill">${cfg.range}</span>
+              <span class="pill">${cfg.notes.length} strings</span>
+            </span>
+          </div>
+        `;
+        card.addEventListener("click", () => {
+          card.classList.add("is-picked");
+          setTimeout(() => showPlay(cfg.type), 220);
+        });
+        els.selectGrid.appendChild(card);
+      });
+    }
+
+    function renderHarp(type) {
+      const cfg = HARPS[type];
+      state.currentType = type;
+      state.lastPlayedAt.clear();
+      document.documentElement.style.setProperty("--accent", cfg.accent);
+      els.stage.style.setProperty("--harp-aspect", cfg.aspect);
+      els.stage.style.setProperty("--accent", cfg.accent);
+      els.photo.src = cfg.image;
+      els.photo.alt = cfg.name;
+      els.currentTitle.textContent = cfg.name;
+      els.currentRange.textContent = `${cfg.range} · ${cfg.scale}`;
+      els.recentNote.textContent = "아직 연주한 음이 없어요";
+      els.recentNote.classList.remove("show");
+      renderStrings(type);
+      renderKeyboardGuide(type);
+    }
+
+    function showSelect() {
+      state.currentType = null;
+      els.playScreen.hidden = true;
+      els.selectScreen.hidden = false;
+      document.querySelectorAll(".select-card.is-picked").forEach(card => card.classList.remove("is-picked"));
+      requestAnimationFrame(() => document.querySelector(".select-card")?.focus({ preventScroll: true }));
+    }
+
+    function showPlay(type) {
+      renderHarp(type);
+      els.selectScreen.hidden = true;
+      els.playScreen.hidden = false;
+      requestAnimationFrame(() => els.backBtn.focus({ preventScroll: true }));
+      if (state.calibrating) enableCalibrate();
+    }
+
+    function setupGlissando() {
+      els.svg.addEventListener("pointerdown", () => {
+        state.dragging = true;
+      });
+      els.svg.addEventListener("pointermove", event => {
+        if (!state.dragging) return;
+        const el = document.elementFromPoint(event.clientX, event.clientY);
+        const noteId = el?.closest?.(".string-item")?.dataset?.note;
+        if (noteId && canGliss(noteId)) triggerNote(noteId, { source: "glissando" });
+      });
+      ["pointerup", "pointercancel", "pointerleave"].forEach(eventName => {
+        els.svg.addEventListener(eventName, () => {
+          state.dragging = false;
+        });
+      });
+      window.addEventListener("pointerup", () => {
+        state.dragging = false;
+      });
+    }
+
+    function enableCalibrate() {
+      if (els.stage.dataset.calibrateReady) return;
+      els.stage.dataset.calibrateReady = "true";
+      els.calibrationBadge.classList.add("is-visible");
+      const points = [];
+      els.stage.addEventListener("pointerdown", event => {
+        const rect = els.stage.getBoundingClientRect();
+        const x = +(((event.clientX - rect.left) / rect.width) * 100).toFixed(1);
+        const y = +(((event.clientY - rect.top) / rect.height) * 100).toFixed(1);
+        points.push({ x, y });
+        console.log(`(${points.length}) x:${x}, y:${y}`, points);
+      });
+      console.log("[calibrate] 현마다 상단에서 하단 순서로 클릭하세요. geo 또는 OVERRIDES에 반영할 0~100 좌표를 출력합니다.");
+    }
+
+    function runMappingTests() {
+      const M = (code, mods, type) => resolveShortcut({
+        code,
+        shiftKey: !!mods.s,
+        ctrlKey: !!mods.c,
+        altKey: !!mods.a,
+        metaKey: !!mods.m
+      }, type);
+      console.assert(M("Digit1", {}, "15") === "C4");
+      console.assert(M("Digit7", {}, "21") === "B4");
+      console.assert(M("Digit8", {}, "21") === null);
+      console.assert(M("Numpad1", {}, "19") === "C4");
+      console.assert(M("Digit5", { s: 1 }, "15") === "G5");
+      console.assert(M("Digit6", { s: 1 }, "15") === null);
+      console.assert(M("Digit7", { s: 1 }, "19") === "B5");
+      console.assert(M("Digit7", { s: 1 }, "21") === "B5");
+      console.assert(M("Digit5", { c: 1 }, "15") === "G3");
+      console.assert(M("Digit4", { c: 1 }, "15") === null);
+      console.assert(M("Digit3", { c: 1 }, "19") === "E3");
+      console.assert(M("Digit2", { c: 1 }, "19") === null);
+      console.assert(M("Digit1", { c: 1 }, "21") === "C3");
+      console.assert(M("Digit7", { c: 1 }, "21") === "B3");
+      console.assert(M("Digit5", { c: 1 }, "21") === "G3" && M("Digit5", {}, "21") === "G4" && M("Digit5", { s: 1 }, "21") === "G5");
+      console.assert(M("Digit4", { s: 1, c: 1 }, "21") === null);
+      console.assert(M("Digit1", { a: 1 }, "21") === null);
+      console.assert(M("Digit1", { m: 1 }, "21") === null);
+      console.assert(NOTES_15.length === 15 && NOTES_19.length === 19 && NOTES_21.length === 21);
+      console.assert([...NOTES_15, ...NOTES_19, ...NOTES_21].every(note => NOTE[note]));
+      console.assert(NOTES_15.every(note => NOTES_19.includes(note)) && NOTES_19.every(note => NOTES_21.includes(note)));
+      console.info("[mini-harp] mapping tests passed");
+    }
+
+    function bindEvents() {
+      els.backBtn.addEventListener("click", showSelect);
+      els.volumeSlider.addEventListener("input", event => setVolume(event.target.value));
+      els.guideToggle.addEventListener("click", () => {
+        state.guideOpen = !state.guideOpen;
+        els.guidePanel.classList.toggle("is-open", state.guideOpen);
+        els.guidePanel.setAttribute("aria-hidden", String(!state.guideOpen));
+        els.guideToggle.setAttribute("aria-expanded", String(state.guideOpen));
+        els.guideToggle.textContent = state.guideOpen ? "키표 닫기" : "키표 보기";
+      });
+
+      addEventListener("keydown", event => {
+        if (event.repeat || isEditableTarget(event.target) || !state.currentType) return;
+        const note = resolveShortcut(event, state.currentType);
+        if (!note) return;
+        event.preventDefault();
+        triggerNote(note, { source: "keyboard" });
+      });
+    }
+
+    renderSelectCards();
+    bindEvents();
+    setupGlissando();
+    window.MiniHarpApp = {
+      NOTE,
+      NOTES_15,
+      NOTES_19,
+      NOTES_21,
+      MAP,
+      HARPS,
+      makeStringPositions,
+      resolveShortcut
+    };
+    runMappingTests();
+  </script>
+</body>
+</html>
