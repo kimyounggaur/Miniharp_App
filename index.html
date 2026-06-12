@@ -376,10 +376,10 @@
 
     .string-visible {
       stroke: var(--string-color, rgba(255, 252, 235, .55));
-      stroke-width: 1.6;
+      stroke-width: 1.05;
       stroke-linecap: round;
       vector-effect: non-scaling-stroke;
-      opacity: .58;
+      opacity: .44;
       pointer-events: none;
     }
 
@@ -418,7 +418,7 @@
 
     .string-dot {
       pointer-events: none;
-      opacity: .95;
+      opacity: .78;
       filter: drop-shadow(0 0 4px rgba(0, 0, 0, .32));
     }
 
@@ -733,6 +733,23 @@
         aspect: "269 / 420",
         summary: "G3~G5 · C Major · 가볍게 시작",
         notes: NOTES_15,
+        strings: [
+          [18.8, 9.4, 43.8, 84.6],
+          [23.0, 9.7, 46.4, 81.5],
+          [27.2, 10.0, 49.0, 78.3],
+          [31.4, 10.2, 51.6, 75.1],
+          [35.7, 10.5, 54.2, 72.0],
+          [40.0, 10.7, 56.8, 68.8],
+          [44.3, 10.9, 59.4, 65.6],
+          [48.6, 11.0, 62.0, 62.4],
+          [52.9, 11.1, 64.6, 59.2],
+          [57.2, 11.1, 67.2, 56.0],
+          [61.5, 11.1, 69.8, 52.8],
+          [65.8, 11.0, 72.4, 49.6],
+          [70.1, 10.8, 75.0, 46.4],
+          [74.4, 10.6, 77.6, 43.2],
+          [78.7, 10.3, 80.2, 40.0]
+        ],
         geo: {
           top: { x0: 18.5, y0: 12.1, cx: 43.8, cy: 11.4, x1: 69.5, y1: 13.8 },
           bottom: { x0: 38.8, y0: 83.1, cx: 55.4, cy: 62.8, x1: 68.8, y1: 41.9 }
@@ -748,6 +765,27 @@
         aspect: "537 / 780",
         summary: "E3~B5 · C Major · 균형 잡힌 음역",
         notes: NOTES_19,
+        strings: [
+          [17.6, 17.6, 51.6, 82.6],
+          [21.0, 18.1, 53.2, 80.1],
+          [24.5, 18.5, 54.9, 77.5],
+          [28.1, 18.7, 56.6, 74.9],
+          [31.7, 18.9, 58.3, 72.3],
+          [35.3, 19.0, 60.0, 69.7],
+          [38.9, 19.1, 61.7, 67.1],
+          [42.5, 19.1, 63.4, 64.5],
+          [46.1, 19.0, 65.1, 61.9],
+          [49.7, 18.9, 66.8, 59.3],
+          [53.3, 18.7, 68.5, 56.7],
+          [56.9, 18.5, 70.2, 54.1],
+          [60.5, 18.2, 71.9, 51.5],
+          [64.1, 17.9, 73.6, 48.9],
+          [67.7, 17.5, 75.3, 46.3],
+          [71.3, 17.1, 77.0, 43.7],
+          [74.9, 16.7, 78.7, 41.1],
+          [78.5, 16.3, 80.4, 38.5],
+          [82.1, 15.9, 82.1, 35.9]
+        ],
         geo: {
           top: { x0: 17.5, y0: 17.4, cx: 48.4, cy: 20, x1: 78.6, y1: 17.2 },
           bottom: { x0: 52.5, y0: 82.4, cx: 64, cy: 59.6, x1: 79.6, y1: 38.6 }
@@ -763,6 +801,29 @@
         aspect: "596 / 842",
         summary: "C3~B5 · C Major · 3옥타브 풀레인지",
         notes: NOTES_21,
+        strings: [
+          [35.2, 23.1, 45.7, 73.4],
+          [36.9, 23.5, 47.0, 71.1],
+          [38.6, 23.9, 48.3, 68.8],
+          [40.4, 24.3, 49.6, 66.4],
+          [42.2, 24.7, 50.9, 64.0],
+          [44.0, 25.1, 52.2, 61.7],
+          [45.8, 25.5, 53.5, 59.4],
+          [47.6, 25.9, 54.8, 57.1],
+          [49.4, 26.3, 56.1, 54.8],
+          [51.2, 26.6, 57.4, 52.5],
+          [53.0, 26.9, 58.7, 50.2],
+          [54.8, 27.2, 60.0, 47.9],
+          [56.6, 27.5, 61.3, 45.7],
+          [58.4, 27.8, 62.6, 43.6],
+          [60.2, 28.1, 63.9, 41.8],
+          [62.0, 28.4, 65.2, 40.7],
+          [63.8, 28.7, 66.5, 40.0],
+          [65.6, 28.9, 67.8, 39.5],
+          [67.4, 29.1, 69.1, 39.1],
+          [69.2, 29.3, 70.4, 38.8],
+          [71.0, 29.5, 71.7, 38.5]
+        ],
         geo: {
           top: { x0: 34.8, y0: 23.3, cx: 50.6, cy: 25.4, x1: 68.8, y1: 30.2 },
           bottom: { x0: 45.5, y0: 70.2, cx: 58.4, cy: 55.2, x1: 71.6, y1: 39.6 }
@@ -828,8 +889,9 @@
       const last = cfg.notes.length - 1;
       return cfg.notes.map((noteId, index) => {
         const t = last === 0 ? 0 : index / last;
-        const top = quadPoint(cfg.geo.top, t);
-        const bottom = quadPoint(cfg.geo.bottom, t);
+        const exact = cfg.strings?.[index];
+        const top = exact ? { x: exact[0], y: exact[1] } : quadPoint(cfg.geo.top, t);
+        const bottom = exact ? { x: exact[2], y: exact[3] } : quadPoint(cfg.geo.bottom, t);
         const override = OVERRIDES[type]?.[noteId] || {};
         return {
           noteId,
@@ -1057,7 +1119,7 @@
             class: `string-dot ${pitchClass === "C" ? "is-c" : "is-f"}`,
             cx: x1,
             cy: y1,
-            r: 1
+            r: .68
           }));
         }
 
@@ -1221,6 +1283,7 @@
       console.assert(NOTES_15.length === 15 && NOTES_19.length === 19 && NOTES_21.length === 21);
       console.assert([...NOTES_15, ...NOTES_19, ...NOTES_21].every(note => NOTE[note]));
       console.assert(NOTES_15.every(note => NOTES_19.includes(note)) && NOTES_19.every(note => NOTES_21.includes(note)));
+      console.assert(Object.values(HARPS).every(harp => !harp.strings || harp.strings.length === harp.notes.length));
       console.info("[mini-harp] mapping tests passed");
     }
 
